@@ -1,0 +1,100 @@
+---
+title: "Homework Assignment 1"
+author: "Ellen Tomljanovic & Bryce Garver"
+date: 'Due EoD Sun Oct 31, 2021'
+output:
+  html_document: 
+    toc: TRUE
+    toc_float: TRUE
+    code_folding: show
+  pdf_document: default
+---
+
+## HW-1 Submission
+
+## Data frame basics
+```{r, cache = TRUE}
+#Reading & Exploring Data
+nyc <- read.csv("nycflights.csv")
+head(nyc,n=10)
+str(nyc)
+summary(nyc)
+
+```
+## Cleaning Data
+```{r, cache = TRUE}
+#Remove Unneeded Columns
+nyc$X <- NULL
+nyc$year <- NULL
+
+#Change Column Type
+nyc$carrier <- as.factor(nyc$carrier)
+nyc$tailnum <- as.factor(nyc$tailnum)
+nyc$origin <- as.factor(nyc$origin)
+nyc$flight <- as.factor(nyc$flight)
+nyc$dest <- as.factor(nyc$dest)
+nyc$month <- as.factor(nyc$month)
+
+#Additional Cleaning
+nyc$flightdate <- as.Date(nyc$time_hour, format = "%Y-%m-%d %H:%M:%S")
+str(nyc)
+```
+
+
+## Data Exploration
+```{r, cache = TRUE}
+
+#How many airlines are there?
+nlevels(nyc$carrier)
+
+#How many flights there were by the airline with code `OO`?
+nrow(nyc[nyc$carrier == "OO",])
+
+#How long is the shortest flight out of any NYC airport?
+min(nyc$air_time, na.rm = TRUE)
+
+#How many flights where there by United Airlines on Jan 12th 2013?
+nrow(nyc[nyc$carrier == "UA" & nyc$flightdate == "2013-01-12",])
+
+```
+
+## Arrival Delay
+```{r}
+#What was the average arrival delay for all airports and all airlines combined in 2013? 
+mean(nyc$arr_delay, na.rm = TRUE) 
+
+#Whats was the median arrival delay for all airports and all airlines combined in 2013?
+median(nyc$arr_delay, na.rm = TRUE) 
+
+```
+It's very interesting that the mean is positive (meaning flights arrive late) and that the median is negative. This would say that there are a handful of flights with significant delays that are skewing the mean to be much higher. It may make sense to remove them as outliers if we were looking for a more accurate depiction of on average how late/early are flights
+
+### Airline Performance
+```{r}
+#Calculate average arrival delays by airline.
+carrier_delay_mean <-round(tapply(nyc$arr_delay, nyc$carrier, mean, na.rm = TRUE))
+barplot(sort(carrier_delay_mean), col = "blue")
+
+names(carrier_delay_mean[carrier_delay_mean == max(carrier_delay_mean)])
+names(carrier_delay_mean[carrier_delay_mean == min(carrier_delay_mean)])
+
+names(carrier_delay_mean[carrier_delay_mean < 0])
+
+
+```
+The airline with the highest average arrival delay is `r names(carrier_delay_mean[carrier_delay_mean == max(carrier_delay_mean)])`. The airline with the lowest average arrival delay is `r names(carrier_delay_mean[carrier_delay_mean == min(carrier_delay_mean)])`. The airlines with negative average delay are `r names(carrier_delay_mean[carrier_delay_mean < 0])`.
+
+
+### Air Gain
+```{r}
+nyc$airgain <- nyc$dep_delay - nyc$arr_delay
+boxplot(airgain~carrier, data=nyc, col="blue")
+
+tapply(nyc$airgain, nyc$carrier, mean, na.rm = TRUE)
+
+
+```
+Most airlines, on average, do gain time back when in air. `r tapply(nyc$airgain, nyc$carrier, mean, na.rm = TRUE)`. The airlines with the worst airgain are F9, FL, and MQ. The best appear to be HA, VX, and AS. 
+
+
+
